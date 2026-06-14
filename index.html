@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#2C4BA0"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Mi Tienda"/>
+<title>Mi Tienda</title>
+
+<!-- PWA Manifest inline -->
+<script>
+const manifestData = {
+  name: "Mi Tienda",
+  short_name: "Mi Tienda",
+  description: "Sistema de Inventario y Ventas",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#0F1117",
+  theme_color: "#2C4BA0",
+  orientation: "portrait",
+  icons: [
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232C4BA0'/><text y='.9em' font-size='70' x='15'>🏪</text></svg>", sizes: "192x192", type: "image/svg+xml" },
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232C4BA0'/><text y='.9em' font-size='70' x='15'>🏪</text></svg>", sizes: "512x512", type: "image/svg+xml" }
+  ]
+};
+const blob = new Blob([JSON.stringify(manifestData)], {type:'application/json'});
+const manifestURL = URL.createObjectURL(blob);
+document.write('<link rel="manifest" href="' + manifestURL + '"/>');
+</script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#0F1117;color:#E8EAF6;font-family:'Inter',system-ui,sans-serif;min-height:100vh;overscroll-behavior:none}
+input,button,select{font-family:inherit}
+button{cursor:pointer;border:none;background:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#1A1D27}
+::-webkit-scrollbar-thumb{background:#2E3350;border-radius:4px}
+
+/* Layout */
+#app{display:flex;flex-direction:column;min-height:100vh}
+.header{background:linear-gradient(90deg,#2C4BA0,#4F7EFF);padding:16px 20px;display:flex;align-items:center;gap:12;box-shadow:0 2px 20px rgba(79,126,255,.35)}
+.header-icon{font-size:26px}
+.header-title{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.header-sub{font-size:11px;opacity:.7;margin-top:2px}
+.header-date{margin-left:auto;font-size:12px;opacity:.7}
+
+/* Main tabs */
+.main-tabs{display:flex;background:#1A1D27;border-bottom:1px solid #2E3350;overflow-x:auto}
+.main-tab{padding:14px 22px;font-size:14px;font-weight:600;color:#7B82A8;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;flex:1;text-align:center}
+.main-tab.active{color:#4F7EFF;border-bottom-color:#4F7EFF}
+
+/* Content */
+.body{flex:1;padding:16px;max-width:900px;margin:0 auto;width:100%}
+
+/* Card */
+.card{background:#22263A;border-radius:14px;border:1px solid #2E3350;overflow:hidden;margin-bottom:16px}
+
+/* Sub tabs */
+.sub-tabs{display:flex;gap:6px;padding:12px 16px 0;border-bottom:1px solid #2E3350;background:#1A1D27;overflow-x:auto}
+.sub-tab{padding:8px 14px;border-radius:8px 8px 0 0;font-size:13px;font-weight:600;background:transparent;color:#7B82A8;border:1px solid transparent;border-bottom:none;white-space:nowrap;transition:all .15s}
+.sub-tab.active{background:#22263A;color:#4F7EFF;border-color:#2E3350}
+
+/* Forms */
+.form-section{padding:20px}
+.form-group{margin-bottom:16px}
+label{font-size:12px;font-weight:600;color:#7B82A8;margin-bottom:6px;display:block}
+input[type=text],input[type=number]{background:#161927;border:1px solid #2E3350;border-radius:8px;color:#E8EAF6;padding:11px 14px;font-size:15px;width:100%;outline:none;transition:border-color .2s;-webkit-appearance:none}
+input:focus{border-color:#4F7EFF}
+input.error{border-color:#EF4444}
+input[readonly]{opacity:.7}
+.err-msg{color:#EF4444;font-size:12px;margin-top:4px}
+
+/* Input with barcode button */
+.input-with-scan{display:flex;gap:8px}
+.input-with-scan input{flex:1}
+.scan-btn{background:#2C4BA0;border:1px solid #4F7EFF;border-radius:8px;color:#E8EAF6;padding:0 14px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0;min-width:48px;justify-content:center}
+.scan-btn svg{width:20px;height:20px;flex-shrink:0}
+
+/* Buttons */
+.btn{padding:11px 20px;border-radius:8px;font-size:14px;font-weight:700;color:#fff;transition:opacity .15s;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn-primary{background:#4F7EFF}
+.btn-success{background:#27C77B}
+.btn-danger{background:#EF4444;padding:7px 14px;font-size:12px}
+.btn-secondary{background:#2E3350}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-full{width:100%;padding:14px 0;font-size:16px}
+
+/* Alert banners */
+.alert{border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:14px;font-weight:600}
+.alert-success{background:rgba(39,199,123,.15);border:1px solid #27C77B;color:#27C77B}
+.alert-warn{background:rgba(245,158,11,.15);border:1px solid #F59E0B;color:#F59E0B}
+
+/* Table */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:400px}
+th{text-align:left;padding:11px 14px;font-size:11px;font-weight:700;color:#7B82A8;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #2E3350}
+td{padding:12px 14px;font-size:14px;border-bottom:1px solid rgba(46,51,80,.3)}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-accent{background:rgba(79,126,255,.15);color:#4F7EFF}
+.badge-success{background:rgba(39,199,123,.15);color:#27C77B}
+.td-success{color:#27C77B;font-weight:700}
+.td-muted{color:#7B82A8;font-size:12px}
+.td-bold{font-weight:600}
+
+/* Search bar */
+.search-row{padding:14px 16px;display:flex;gap:8px;align-items:center}
+.search-row input{flex:1}
+.search-count{color:#7B82A8;font-size:13px;white-space:nowrap}
+
+/* Empty */
+.empty{padding:48px 0;text-align:center;color:#7B82A8;font-size:14px;line-height:1.8}
+
+/* Summary bar */
+.summary-bar{margin:16px;border-radius:10px;padding:16px 20px;background:linear-gradient(90deg,rgba(44,75,160,.4),rgba(39,199,123,.15));border:1px solid #2E3350;display:flex;gap:24px;flex-wrap:wrap}
+.summary-item .lbl{font-size:10px;color:#7B82A8;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+.summary-item .val{font-size:22px;font-weight:800}
+.summary-item .val.green{color:#27C77B}
+
+/* Day group */
+.day-group{padding:0 16px 16px}
+.day-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-top:16px}
+.day-title{font-size:14px;font-weight:700}
+.day-title.today{color:#4F7EFF}
+.day-total{font-size:14px;font-weight:700;color:#27C77B}
+.day-table-wrap{background:#1A1D27;border-radius:10px;overflow:hidden;border:1px solid #2E3350}
+
+/* Billing grid */
+.billing-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+@media(max-width:480px){.billing-grid{grid-template-columns:1fr 1fr;}.billing-grid .total-col{grid-column:1/-1}}
+
+/* Dropdown */
+.dd-wrap{position:relative}
+.dropdown{position:absolute;top:100%;left:0;right:0;z-index:200;background:#22263A;border:1px solid #2E3350;border-radius:0 0 10px 10px;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.dd-item{padding:10px 14px;cursor:pointer;font-size:14px;transition:background .1s;display:flex;align-items:center;justify-content:space-between}
+.dd-item:hover,.dd-item.hover{background:#2C4BA0}
+.dd-item-name{font-weight:600}
+.dd-item-id{color:#7B82A8;font-size:12px;margin-left:8px}
+.dd-item-price{color:#27C77B;font-weight:700;font-size:13px}
+
+/* Barcode Modal */
+.modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#22263A;border-radius:18px;border:1px solid #2E3350;width:100%;max-width:460px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.7)}
+.modal-head{padding:14px 18px;border-bottom:1px solid #2E3350;display:flex;align-items:center;justify-content:space-between}
+.modal-head-title{font-weight:700;font-size:15px}
+.modal-head-sub{font-size:11px;color:#7B82A8;margin-top:2px}
+.modal-close{background:none;border:none;color:#7B82A8;font-size:22px;cursor:pointer;line-height:1;padding:4px}
+.video-wrap{position:relative;background:#000;aspect-ratio:4/3;overflow:hidden}
+#scanner-video{width:100%;height:100%;object-fit:cover;display:block}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-frame{width:220px;height:130px;border:2px solid #4F7EFF;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);position:relative}
+.scan-corner{position:absolute;width:18px;height:18px}
+.sc-tl{top:-2px;left:-2px;border-top:3px solid #4F7EFF;border-left:3px solid #4F7EFF}
+.sc-tr{top:-2px;right:-2px;border-top:3px solid #4F7EFF;border-right:3px solid #4F7EFF}
+.sc-bl{bottom:-2px;left:-2px;border-bottom:3px solid #4F7EFF;border-left:3px solid #4F7EFF}
+.sc-br{bottom:-2px;right:-2px;border-bottom:3px solid #4F7EFF;border-right:3px solid #4F7EFF}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#4F7EFF,transparent);animation:scanline 1.8s ease-in-out infinite}
+@keyframes scanline{0%{top:10%}50%{top:85%}100%{top:10%}}
+.scan-status{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.65)}
+.scan-status-text{color:#E8EAF6;font-size:14px;text-align:center;padding:0 20px}
+.scan-success-overlay{position:absolute;inset:0;background:rgba(39,199,123,.12);display:flex;align-items:center;justify-content:center}
+.scan-success-box{background:#22263A;border-radius:12px;padding:18px 24px;text-align:center;border:2px solid #27C77B}
+.scan-success-icon{font-size:28px;margin-bottom:8px}
+.scan-success-title{font-weight:700;font-size:16px;color:#27C77B;margin-bottom:4px}
+.scan-success-code{font-family:monospace;font-size:15px;letter-spacing:2px;color:#E8EAF6}
+.modal-foot{padding:14px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.scan-hint{color:#7B82A8;font-size:13px;flex:1}
+
+/* Install banner */
+.install-banner{background:linear-gradient(90deg,#2C4BA0,#4F7EFF);margin:16px;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.install-banner-text{flex:1;font-size:13px;font-weight:600}
+.install-banner-sub{font-size:11px;opacity:.8;margin-top:2px;font-weight:400}
+.install-banner-btn{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:8px;color:#fff;padding:8px 14px;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer}
+
+/* Safe area */
+body{padding-bottom:env(safe-area-inset-bottom)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <span class="header-icon">🏪</span>
+    <div>
+      <div class="header-title">Mi Tienda</div>
+      <div class="header-sub">Inventario y Ventas</div>
+    </div>
+    <div class="header-date" id="header-date"></div>
+  </div>
+
+  <!-- Install banner (shown when installable) -->
+  <div class="install-banner" id="install-banner" style="display:none">
+    <div>
+      <div class="install-banner-text">📲 Instalar como app</div>
+      <div class="install-banner-sub">Úsala sin necesidad del navegador</div>
+    </div>
+    <button class="install-banner-btn" id="install-btn">Instalar</button>
+  </div>
+
+  <div class="main-tabs">
+    <button class="main-tab active" id="tab-inventory" onclick="switchTab('inventory')">📦 Inventario</button>
+    <button class="main-tab" id="tab-sales" onclick="switchTab('sales')">💰 Ventas</button>
+  </div>
+
+  <div class="body">
+    <!-- INVENTORY SCREEN -->
+    <div id="screen-inventory">
+      <div class="card">
+        <div class="sub-tabs">
+          <button class="sub-tab active" id="invtab-list" onclick="switchInvTab('list')">📦 Inventario</button>
+          <button class="sub-tab" id="invtab-add" onclick="switchInvTab('add')">➕ Registrar Producto</button>
+        </div>
+
+        <!-- Inventory List -->
+        <div id="inv-list">
+          <div class="search-row">
+            <input type="text" id="inv-search" placeholder="Buscar por nombre o ID…" oninput="renderInventory()" autocomplete="off"/>
+            <button class="scan-btn" onclick="openScanner('inv-search', null)" title="Buscar por código de barras">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"/><line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="7" x2="12" y2="17"/><line x1="17" y1="12" x2="17" y2="12.01"/><line x1="7" y1="7" x2="7" y2="17"/></svg>
+            </button>
+            <span class="search-count" id="inv-count"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Acción</th></tr></thead>
+              <tbody id="inv-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Add Product Form -->
+        <div id="inv-add" style="display:none">
+          <div class="form-section">
+            <h3 style="margin-bottom:20px;font-weight:700;font-size:17px">Nuevo Producto</h3>
+            <div id="inv-saved" class="alert alert-success" style="display:none">✅ Producto registrado correctamente.</div>
+            <div class="form-group">
+              <label>Nombre del Producto</label>
+              <input type="text" id="f-name" placeholder="Ej: Coca-Cola 600ml" autocomplete="off"/>
+              <div class="err-msg" id="e-name"></div>
+            </div>
+            <div class="form-group">
+              <label>ID del Producto <span style="color:#7B82A8;font-weight:400">(o escanea el código de barras)</span></label>
+              <div class="input-with-scan">
+                <input type="text" id="f-id" placeholder="Ej: 7501234567890" autocomplete="off"/>
+                <button class="scan-btn" onclick="openScanner('f-id', null)" title="Escanear código de barras">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"/><line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="7" x2="12" y2="17"/><line x1="17" y1="12" x2="17" y2="12.01"/><line x1="7" y1="7" x2="7" y2="17"/></svg>
+                  Escanear
+                </button>
+              </div>
+              <div class="err-msg" id="e-id"></div>
+            </div>
+            <div class="form-group">
+              <label>Precio de Venta</label>
+              <input type="number" id="f-price" placeholder="Ej: 18.50" min="0" step="0.01"/>
+              <div class="err-msg" id="e-price"></div>
+            </div>
+            <button class="btn btn-primary" onclick="addProduct()">Registrar Producto</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SALES SCREEN -->
+    <div id="screen-sales" style="display:none">
+      <div class="card">
+        <div class="sub-tabs">
+          <button class="sub-tab active" id="saletab-list" onclick="switchSaleTab('list')">📊 Ventas del Día</button>
+          <button class="sub-tab" id="saletab-billing" onclick="switchSaleTab('billing')">🧾 Facturación</button>
+        </div>
+
+        <!-- Sales list -->
+        <div id="sale-list">
+          <div class="summary-bar">
+            <div class="summary-item"><div class="lbl">Hoy</div><div class="val green" id="s-today-total">$0</div></div>
+            <div class="summary-item"><div class="lbl">Ventas hoy</div><div class="val" id="s-today-count">0</div></div>
+            <div class="summary-item"><div class="lbl">Total registros</div><div class="val" id="s-total-count">0</div></div>
+          </div>
+          <div id="sales-groups"></div>
+        </div>
+
+        <!-- Billing form -->
+        <div id="sale-billing" style="display:none">
+          <div class="form-section">
+            <h3 style="margin-bottom:20px;font-weight:700;font-size:17px">Nueva Venta</h3>
+            <div id="billing-saved" class="alert alert-success" style="display:none">✅ Venta registrada correctamente.</div>
+
+            <div class="form-group">
+              <label>Nombre o ID del Producto <span style="color:#7B82A8;font-weight:400">(o escanea el código)</span></label>
+              <div style="display:flex;gap:8px">
+                <div class="dd-wrap" style="flex:1">
+                  <input type="text" id="b-search" placeholder="Buscar producto…" oninput="billingSearch()" onfocus="showDropdown()" autocomplete="off"/>
+                  <div class="dropdown" id="b-dropdown" style="display:none"></div>
+                </div>
+                <button class="scan-btn" onclick="openScanner('b-search', onBillingScan)" title="Escanear código de barras">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"/><line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="7" x2="12" y2="17"/><line x1="17" y1="12" x2="17" y2="12.01"/><line x1="7" y1="7" x2="7" y2="17"/></svg>
+                  Escanear
+                </button>
+              </div>
+              <div id="b-notfound" class="alert alert-warn" style="display:none;margin-top:8px"></div>
+            </div>
+
+            <div class="billing-grid">
+              <div>
+                <label>Precio por Unidad</label>
+                <input type="text" id="b-price" readonly style="color:#27C77B;font-weight:700"/>
+              </div>
+              <div>
+                <label>Cantidad</label>
+                <input type="number" id="b-qty" min="1" placeholder="0" oninput="calcTotal()"/>
+              </div>
+              <div class="total-col">
+                <label>Precio Total</label>
+                <input type="text" id="b-total" readonly style="font-weight:800;font-size:16px;color:#4F7EFF"/>
+              </div>
+            </div>
+
+            <button class="btn btn-success btn-full" id="b-sell-btn" onclick="registerSale()" disabled>
+              Registrar Venta
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BARCODE SCANNER MODAL -->
+<div class="modal-overlay" id="scanner-modal" style="display:none" onclick="closeScannerOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-head-title">📷 Escanear Código de Barras</div>
+        <div class="modal-head-sub">Apunta la cámara al código</div>
+      </div>
+      <button class="modal-close" onclick="closeScanner()">✕</button>
+    </div>
+    <div class="video-wrap">
+      <video id="scanner-video" playsinline muted autoplay></video>
+      <div class="scan-overlay" id="scan-overlay">
+        <div class="scan-frame">
+          <div class="scan-corner sc-tl"></div>
+          <div class="scan-corner sc-tr"></div>
+          <div class="scan-corner sc-bl"></div>
+          <div class="scan-corner sc-br"></div>
+          <div class="scan-line"></div>
+        </div>
+      </div>
+      <div class="scan-status" id="scan-status"><div class="scan-status-text">Iniciando cámara…</div></div>
+      <div class="scan-success-overlay" id="scan-success" style="display:none">
+        <div class="scan-success-box">
+          <div class="scan-success-icon">✅</div>
+          <div class="scan-success-title">¡Código leído!</div>
+          <div class="scan-success-code" id="scan-result-code"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="switch-cam-btn" style="display:none" onclick="switchCamera()">🔄 Cambiar cámara</button>
+      <span class="scan-hint" id="scan-hint">Enfoca el código de barras…</span>
+      <button class="btn btn-secondary" id="rescan-btn" style="display:none" onclick="rescan()">🔁 Volver a escanear</button>
+      <button class="btn btn-success" id="use-code-btn" style="display:none" onclick="useScannedCode()">Usar este código</button>
+    </div>
+  </div>
+</div>
+
+<!-- ZXing -->
+<script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.4/umd/index.min.js"></script>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────
+let products = JSON.parse(localStorage.getItem('tienda:products') || '[]');
+let sales    = JSON.parse(localStorage.getItem('tienda:sales')    || '[]');
+let selectedProduct = null;
+
+function saveProducts(){ localStorage.setItem('tienda:products', JSON.stringify(products)); }
+function saveSales()   { localStorage.setItem('tienda:sales',    JSON.stringify(sales));    }
+
+const fmt = n => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(n||0);
+const todayStr = () => new Date().toLocaleDateString('es-MX');
+
+// ── Init ──────────────────────────────────────────────────────────────────
+document.getElementById('header-date').textContent = todayStr();
+renderInventory();
+renderSales();
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+function switchTab(t){
+  document.getElementById('screen-inventory').style.display = t==='inventory'?'':'none';
+  document.getElementById('screen-sales').style.display     = t==='sales'?'':'none';
+  document.getElementById('tab-inventory').className = 'main-tab'+(t==='inventory'?' active':'');
+  document.getElementById('tab-sales').className     = 'main-tab'+(t==='sales'?' active':'');
+  if(t==='sales') renderSales();
+}
+
+function switchInvTab(t){
+  document.getElementById('inv-list').style.display = t==='list'?'':'none';
+  document.getElementById('inv-add').style.display  = t==='add'?'':'none';
+  document.getElementById('invtab-list').className = 'sub-tab'+(t==='list'?' active':'');
+  document.getElementById('invtab-add').className  = 'sub-tab'+(t==='add'?' active':'');
+}
+
+function switchSaleTab(t){
+  document.getElementById('sale-list').style.display    = t==='list'?'':'none';
+  document.getElementById('sale-billing').style.display = t==='billing'?'':'none';
+  document.getElementById('saletab-list').className    = 'sub-tab'+(t==='list'?' active':'');
+  document.getElementById('saletab-billing').className = 'sub-tab'+(t==='billing'?' active':'');
+  if(t==='list') renderSales();
+}
+
+// ── Inventory ─────────────────────────────────────────────────────────────
+function renderInventory(){
+  const q = (document.getElementById('inv-search').value||'').toLowerCase();
+  const filtered = products.filter(p=>
+    p.name.toLowerCase().includes(q)||p.id.toLowerCase().includes(q)
+  );
+  document.getElementById('inv-count').textContent = filtered.length+' producto'+(filtered.length!==1?'s':'');
+  const tbody = document.getElementById('inv-tbody');
+  if(filtered.length===0){
+    tbody.innerHTML = `<tr><td colspan="4" class="empty">No hay productos registrados todavía.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(p=>`
+    <tr>
+      <td><span class="badge badge-accent">${esc(p.id)}</span></td>
+      <td class="td-bold">${esc(p.name)}</td>
+      <td class="td-success">${fmt(p.price)}</td>
+      <td><button class="btn btn-danger" onclick="deleteProduct('${esc(p.id)}')">Eliminar</button></td>
+    </tr>`).join('');
+}
+
+function addProduct(){
+  const name  = document.getElementById('f-name').value.trim();
+  const id    = document.getElementById('f-id').value.trim();
+  const price = parseFloat(document.getElementById('f-price').value);
+  let ok=true;
+  setErr('e-name',''); setErr('e-id',''); setErr('e-price','');
+  if(!name){setErr('e-name','Requerido');ok=false;}
+  if(!id){setErr('e-id','Requerido');ok=false;}
+  else if(products.some(p=>p.id===id)){setErr('e-id','ID ya existe');ok=false;}
+  if(!price||price<=0){setErr('e-price','Precio inválido');ok=false;}
+  if(!ok) return;
+  products.push({name,id,price,createdAt:new Date().toISOString()});
+  saveProducts();
+  document.getElementById('f-name').value='';
+  document.getElementById('f-id').value='';
+  document.getElementById('f-price').value='';
+  const s=document.getElementById('inv-saved');
+  s.style.display=''; setTimeout(()=>s.style.display='none',2500);
+}
+
+function deleteProduct(id){
+  if(!confirm('¿Eliminar este producto?')) return;
+  products=products.filter(p=>p.id!==id);
+  saveProducts(); renderInventory();
+}
+
+function setErr(id,msg){
+  const el=document.getElementById(id);
+  if(el) el.textContent=msg;
+}
+
+// ── Billing ───────────────────────────────────────────────────────────────
+function billingSearch(){
+  selectedProduct=null;
+  updateBillingFields();
+  showDropdown();
+}
+
+function showDropdown(){
+  const q=(document.getElementById('b-search').value||'').toLowerCase().trim();
+  const dd=document.getElementById('b-dropdown');
+  if(!q){dd.style.display='none';return;}
+  const results=products.filter(p=>p.name.toLowerCase().includes(q)||p.id.toLowerCase().includes(q)).slice(0,8);
+  if(!results.length){dd.style.display='none';return;}
+  dd.innerHTML=results.map((p,i)=>`
+    <div class="dd-item" onclick="selectProduct('${esc(p.id)}')">
+      <span><span class="dd-item-name">${esc(p.name)}</span><span class="dd-item-id">#${esc(p.id)}</span></span>
+      <span class="dd-item-price">${fmt(p.price)}</span>
+    </div>`).join('');
+  dd.style.display='';
+}
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.dd-wrap')) document.getElementById('b-dropdown').style.display='none';
+});
+
+function selectProduct(id){
+  const p=products.find(x=>x.id===id);
+  if(!p) return;
+  selectedProduct=p;
+  document.getElementById('b-search').value=p.name;
+  document.getElementById('b-dropdown').style.display='none';
+  document.getElementById('b-notfound').style.display='none';
+  updateBillingFields();
+}
+
+function onBillingScan(code){
+  document.getElementById('b-search').value=code;
+  const found=products.find(p=>p.id===code);
+  if(found){ selectProduct(found.id); }
+  else{
+    selectedProduct=null;
+    updateBillingFields();
+    const nf=document.getElementById('b-notfound');
+    nf.textContent='⚠️ No se encontró ningún producto con ID "'+code+'"';
+    nf.style.display='';
+    showDropdown();
+  }
+}
+
+function updateBillingFields(){
+  const p=selectedProduct;
+  document.getElementById('b-price').value=p?fmt(p.price):'';
+  calcTotal();
+}
+
+function calcTotal(){
+  const qty=parseFloat(document.getElementById('b-qty').value)||0;
+  const price=selectedProduct?selectedProduct.price:0;
+  const total=qty>0&&price>0?price*qty:0;
+  document.getElementById('b-total').value=total>0?fmt(total):'—';
+  document.getElementById('b-sell-btn').disabled=!(selectedProduct&&qty>0);
+  document.getElementById('b-sell-btn').textContent='Registrar Venta'+(total>0?' · '+fmt(total):'');
+}
+
+function registerSale(){
+  const qty=parseFloat(document.getElementById('b-qty').value);
+  if(!selectedProduct||!qty||qty<=0) return;
+  const total=selectedProduct.price*qty;
+  sales.unshift({
+    id:Date.now(), product:{...selectedProduct}, qty, total,
+    date:todayStr(), time:new Date().toLocaleTimeString('es-MX')
+  });
+  saveSales();
+  // Reset
+  document.getElementById('b-search').value='';
+  document.getElementById('b-qty').value='';
+  selectedProduct=null; updateBillingFields();
+  const s=document.getElementById('billing-saved');
+  s.style.display=''; setTimeout(()=>s.style.display='none',2500);
+  switchSaleTab('list');
+}
+
+// ── Sales render ──────────────────────────────────────────────────────────
+function renderSales(){
+  const today=todayStr();
+  const byDay={};
+  sales.forEach(s=>{ byDay[s.date]=byDay[s.date]||[]; byDay[s.date].push(s); });
+  const days=Object.keys(byDay).sort((a,b)=>b.localeCompare(a));
+  const todaySales=byDay[today]||[];
+  const todayTotal=todaySales.reduce((s,v)=>s+v.total,0);
+  document.getElementById('s-today-total').textContent=fmt(todayTotal);
+  document.getElementById('s-today-count').textContent=todaySales.length;
+  document.getElementById('s-total-count').textContent=sales.length;
+  const g=document.getElementById('sales-groups');
+  if(!days.length){g.innerHTML=`<div class="empty">No hay ventas registradas aún.<br>Ve a <b>Facturación</b> para empezar.</div>`;return;}
+  g.innerHTML=days.map(day=>{
+    const list=byDay[day];
+    const dayTotal=list.reduce((s,v)=>s+v.total,0);
+    const isToday=day===today;
+    return `<div class="day-group">
+      <div class="day-header">
+        <span class="day-title${isToday?' today':''}">${isToday?'📅 Hoy — ':''}${day}</span>
+        <span class="day-total">${fmt(dayTotal)}</span>
+      </div>
+      <div class="day-table-wrap"><div class="table-wrap"><table>
+        <thead><tr><th>Hora</th><th>Producto</th><th>ID</th><th>Cant.</th><th>P/u</th><th>Total</th></tr></thead>
+        <tbody>${list.map(v=>`<tr>
+          <td class="td-muted">${v.time}</td>
+          <td class="td-bold">${esc(v.product.name)}</td>
+          <td><span class="badge badge-accent">${esc(v.product.id)}</span></td>
+          <td style="text-align:center">${v.qty}</td>
+          <td class="td-muted">${fmt(v.product.price)}</td>
+          <td class="td-success" style="font-weight:800">${fmt(v.total)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── Barcode Scanner ───────────────────────────────────────────────────────
+let scannerReader=null, scannerStream=null, scannerTargetId=null, scannerCallback=null;
+let scannedCode=null, scannerCameras=[], scannerCamIdx=0;
+
+async function openScanner(targetInputId, callbackFn){
+  scannerTargetId=targetInputId;
+  scannerCallback=callbackFn;
+  scannedCode=null;
+  document.getElementById('scanner-modal').style.display='flex';
+  document.getElementById('scan-status').style.display='flex';
+  document.getElementById('scan-status').querySelector('.scan-status-text').textContent='Iniciando cámara…';
+  document.getElementById('scan-success').style.display='none';
+  document.getElementById('scan-overlay').style.display='flex';
+  document.getElementById('rescan-btn').style.display='none';
+  document.getElementById('use-code-btn').style.display='none';
+  document.getElementById('scan-hint').textContent='Enfoca el código de barras…';
+  await startScanner();
+}
+
+async function startScanner(deviceId){
+  try{
+    if(scannerReader){ try{scannerReader.reset();}catch{} }
+    if(!window.ZXingBrowser) throw new Error('Librería no cargada');
+    const zx=window.ZXingBrowser;
+    if(!scannerCameras.length){
+      scannerCameras=await zx.BrowserMultiFormatReader.listVideoInputDevices();
+      if(!scannerCameras.length) throw new Error('No se encontró cámara');
+      const back=scannerCameras.findIndex(d=>/back|rear|environment/i.test(d.label));
+      scannerCamIdx=back>=0?back:0;
+    }
+    const hints=new Map();
+    hints.set(zx.DecodeHintType.POSSIBLE_FORMATS,[
+      zx.BarcodeFormat.EAN_13,zx.BarcodeFormat.EAN_8,zx.BarcodeFormat.CODE_128,
+      zx.BarcodeFormat.CODE_39,zx.BarcodeFormat.QR_CODE,zx.BarcodeFormat.UPC_A,
+      zx.BarcodeFormat.UPC_E,zx.BarcodeFormat.ITF,zx.BarcodeFormat.DATA_MATRIX,
+    ]);
+    const reader=new zx.BrowserMultiFormatReader(hints);
+    scannerReader=reader;
+    const did=deviceId||scannerCameras[scannerCamIdx]?.deviceId||undefined;
+    const controls=await reader.decodeFromVideoDevice(did,document.getElementById('scanner-video'),(result,err)=>{
+      if(result&&!scannedCode){
+        scannedCode=result.getText();
+        try{controls.stop();}catch{}
+        showScanResult(scannedCode);
+      }
+    });
+    document.getElementById('scan-status').style.display='none';
+    if(scannerCameras.length>1) document.getElementById('switch-cam-btn').style.display='';
+  }catch(e){
+    document.getElementById('scan-status').querySelector('.scan-status-text').textContent='❌ '+(e.message||'No se pudo acceder a la cámara');
+  }
+}
+
+function showScanResult(code){
+  document.getElementById('scan-overlay').style.display='none';
+  document.getElementById('scan-result-code').textContent=code;
+  document.getElementById('scan-success').style.display='flex';
+  document.getElementById('scan-hint').textContent='';
+  document.getElementById('rescan-btn').style.display='';
+  document.getElementById('use-code-btn').style.display='';
+  document.getElementById('switch-cam-btn').style.display='none';
+}
+
+function useScannedCode(){
+  if(!scannedCode) return;
+  if(scannerCallback){ scannerCallback(scannedCode); }
+  else if(scannerTargetId){
+    const el=document.getElementById(scannerTargetId);
+    if(el){ el.value=scannedCode; el.dispatchEvent(new Event('input')); }
+  }
+  closeScanner();
+}
+
+function rescan(){
+  scannedCode=null;
+  document.getElementById('scan-success').style.display='none';
+  document.getElementById('scan-overlay').style.display='flex';
+  document.getElementById('scan-status').style.display='flex';
+  document.getElementById('scan-status').querySelector('.scan-status-text').textContent='Iniciando cámara…';
+  document.getElementById('rescan-btn').style.display='none';
+  document.getElementById('use-code-btn').style.display='none';
+  document.getElementById('scan-hint').textContent='Enfoca el código de barras…';
+  startScanner(scannerCameras[scannerCamIdx]?.deviceId);
+}
+
+async function switchCamera(){
+  scannerCamIdx=(scannerCamIdx+1)%scannerCameras.length;
+  scannedCode=null;
+  document.getElementById('scan-success').style.display='none';
+  document.getElementById('scan-overlay').style.display='flex';
+  document.getElementById('scan-status').style.display='flex';
+  document.getElementById('scan-status').querySelector('.scan-status-text').textContent='Cambiando cámara…';
+  document.getElementById('rescan-btn').style.display='none';
+  document.getElementById('use-code-btn').style.display='none';
+  await startScanner(scannerCameras[scannerCamIdx]?.deviceId);
+}
+
+function closeScanner(){
+  try{scannerReader?.reset();}catch{}
+  scannerReader=null; scannedCode=null;
+  const v=document.getElementById('scanner-video');
+  if(v.srcObject){v.srcObject.getTracks().forEach(t=>t.stop());v.srcObject=null;}
+  document.getElementById('scanner-modal').style.display='none';
+  document.getElementById('switch-cam-btn').style.display='none';
+}
+
+function closeScannerOnOverlay(e){ if(e.target===document.getElementById('scanner-modal')) closeScanner(); }
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── PWA Install ───────────────────────────────────────────────────────────
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault(); deferredPrompt=e;
+  document.getElementById('install-banner').style.display='flex';
+});
+document.getElementById('install-btn').addEventListener('click',async()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const {outcome}=await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  document.getElementById('install-banner').style.display='none';
+});
+window.addEventListener('appinstalled',()=>{ document.getElementById('install-banner').style.display='none'; });
+
+// ── Service Worker for offline ────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  const swCode=`
+    const CACHE='tienda-v1';
+    const ASSETS=['${location.href}','https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.4/umd/index.min.js'];
+    self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).catch(()=>{})));
+    self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>new Response('',{status:503})))));
+  `;
+  const blob=new Blob([swCode],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+</script>
+</body>
+</html>
